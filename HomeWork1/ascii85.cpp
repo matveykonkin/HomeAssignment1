@@ -84,3 +84,48 @@ std::vector<unsigned char> decodeAscii85(const std::string& input) {
     
     return result;
 }
+
+int main(int argc, char* argv[]) {
+    try {
+        if (argc < 2 || argc > 3) {
+            std::cerr << "Usage: " << argv[0] << " [-d] [input]" << std::endl;
+            return 1;
+        }
+        
+        bool decode = false;
+        std::string input;
+        
+        if (std::string(argv[1]) == "-d") {
+            decode = true;
+            if (argc == 3) {
+                input = argv[2];
+            }
+        } else {
+            input = argv[1];
+        }
+        
+        std::vector<unsigned char> data;
+        if (input.empty()) {
+            char c;
+            while (std::cin.get(c)) {
+                data.push_back(c);
+            }
+        } else {
+            data.assign(input.begin(), input.end());
+        }
+        
+        if (decode) {
+            std::string inputStr(data.begin(), data.end());
+            auto decoded = decodeAscii85(inputStr);
+            std::cout.write(reinterpret_cast<const char*>(decoded.data()), decoded.size());
+        } else {
+            auto encoded = encodeAscii85(data);
+            std::cout << encoded;
+        }
+        
+        return 0;
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
+    }
+}

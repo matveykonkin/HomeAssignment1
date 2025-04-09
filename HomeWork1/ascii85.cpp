@@ -1,9 +1,6 @@
-#include <iostream>
-#include <vector>
-#include <string>
-#include <stdexcept>
-#include <algorithm>
+#include "ascii85.h"
 #include <cmath>
+#include <cctype>
 
 std::string encodeAscii85(const std::vector<unsigned char>& data) {
     std::string result;
@@ -49,6 +46,9 @@ std::vector<unsigned char> decodeAscii85(const std::string& input) {
         }
         
         if (input[i] == 'z') {
+            if (i + 1 < input.size() && !isspace(input[i+1])) {
+                throw std::runtime_error("'z' must be followed by whitespace or end of input");
+            }
             for (int j = 0; j < 4; j++) {
                 result.push_back(0);
             }
@@ -62,6 +62,10 @@ std::vector<unsigned char> decodeAscii85(const std::string& input) {
         for (; chars < 5 && i + chars < input.size(); chars++) {
             char c = input[i + chars];
             
+            if (c == 'z') {
+                throw std::runtime_error("'z' can only appear as a complete 4-zero-bytes encoding");
+            }
+            
             if (c < '!' || c > 'u') {
                 throw std::runtime_error("Invalid ASCII85 character");
             }
@@ -72,11 +76,13 @@ std::vector<unsigned char> decodeAscii85(const std::string& input) {
         i += chars;
         
         if (chars < 5) {
-            value *= pow(85, 5 - chars);
+            for (int j = chars; j < 5; j++) {
+                value = value * 85 + ('u' - '!');
+            }
         }
         
         for (int j = 3; j >= 0; j--) {
-            if (j < chars - 1) {
+            if (j < chars - 1 || chars == 5) {
                 result.push_back((value >> (8 * j)) & 0xFF);
             }
         }
@@ -85,47 +91,52 @@ std::vector<unsigned char> decodeAscii85(const std::string& input) {
     return result;
 }
 
-int main(int argc, char* argv[]) {
-    try {
-        if (argc < 2 || argc > 3) {
-            std::cerr << "Usage: " << argv[0] << " [-d] [input]" << std::endl;
-            return 1;
-        }
-        
-        bool decode = false;
-        std::string input;
-        
-        if (std::string(argv[1]) == "-d") {
-            decode = true;
-            if (argc == 3) {
-                input = argv[2];
-            }
-        } else {
-            input = argv[1];
-        }
-        
-        std::vector<unsigned char> data;
-        if (input.empty()) {
+void processInput(bool decode, bool streamMode, std::istream& input, std::ostream& output) {
+    if (streamMode) {
+        if (decode) {
+            std::string buffer;
             char c;
-            while (std::cin.get(c)) {
-                data.push_back(c);
+            while (input.get(c)) {
+                if (isspace(c)) continue;
+                buffer += c;
+                if (buffer.size() >= 5) {
+                    auto decoded = decodeAscii85(buffer.substr(0, 5));
+                    output.write(reinterpret_cast<const char*>(decoded.data()), decoded.size());
+                    buffer = buffer.substr(5);
+                }
+            }
+            if (!buffer.empty()) {
+                auto decoded = decodeAscii85(buffer);
+                output.write(reinterpret_cast<const char*>(decoded.data()), decoded.size());
             }
         } else {
-            data.assign(input.begin(), input.end());
+            std::vector<unsigned char> buffer;
+            char c;
+            while (input.get(c)) {
+                buffer.push_back(c);
+                if (buffer.size() == 4) {
+                    output << encodeAscii85(buffer);
+                    buffer.clear();
+                }
+            }
+            if (!buffer.empty()) {
+                output << encodeAscii85(buffer);
+            }
+        }
+    } else {
+        std::vector<unsigned char> data;
+        char c;
+        while (input.get(c)) {
+            data.push_back(c);
         }
         
         if (decode) {
             std::string inputStr(data.begin(), data.end());
             auto decoded = decodeAscii85(inputStr);
-            std::cout.write(reinterpret_cast<const char*>(decoded.data()), decoded.size());
+            output.write(reinterpret_cast<const char*>(decoded.data()), decoded.size());
         } else {
             auto encoded = encodeAscii85(data);
-            std::cout << encoded;
+            output << encoded;
         }
-        
-        return 0;
-    } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-        return 1;
     }
 }

@@ -5,3 +5,7 @@ g++ -std=c++11 ascii85.o main.o -o ascii85
 Сборка тестов:
 g++ -std=c++11 -c testAscii85.cpp -o testAscii85.o
 g++ -std=c++11 ascii85.o testAscii85.o -lgtest -lgtest_main -lpthread -o test_ascii85
+Запуск тестов:
+./test_ascii85
+Запуск интеграционных тестов:
+python3 integration_test.py

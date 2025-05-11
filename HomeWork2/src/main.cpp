@@ -6,7 +6,7 @@
 
 int main() {
     try {
-        auto data = CSVReader::read("../data/input.csv");
+        auto data = CSVReader::read("data/input.csv");
         if (data.empty() || data[0].empty()) {
             throw std::runtime_error("Input file is empty or invalid");
         }
@@ -26,7 +26,7 @@ int main() {
         Eigen::VectorXd x = GaussSolver::solve(A, b);
 
         std::vector<double> result(x.data(), x.data() + x.size());
-        CSVWriter::write("../data/output.csv", result);
+        CSVWriter::write("data/output.csv", result);
 
         std::cout << "Solution saved to output.csv" << std::endl;
     } catch (const std::exception& e) {

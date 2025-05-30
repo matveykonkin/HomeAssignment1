@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "HomeA3-3.1", "HomeA3-3.2", "HomeA3-3.3", "HomeA3-second_attempt"]
+    paths:
+      - 'HomeWork3/**'   
+  pull_request:
+    branches: ["main", "HomeA3-3.1", "HomeA3-3.2", "HomeA3-3.3", "HomeA3-second_attempt"]
+    paths:
+      - 'HomeWork3/**'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Install dependencies
+      run: sudo apt-get update && sudo apt-get install -y g++ make
+    
+    - name: Build
+      working-directory: ./HomeWork3
+      run: make
+    
+    - name: Run tests
+      working-directory: ./HomeWork3
+      run: make test

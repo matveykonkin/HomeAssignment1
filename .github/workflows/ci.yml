@@ -3,7 +3,12 @@ name: CI
 on:
   push:
     branches: ["main", "HomeA3-3.1", "HomeA3-3.2", "HomeA3-3.3", "HomeA3-second_attempt"]
-  pull_request: {} 
+    paths:
+      - 'HomeWork3/**'   
+  pull_request:
+    branches: ["main", "HomeA3-3.1", "HomeA3-3.2", "HomeA3-3.3", "HomeA3-second_attempt"]
+    paths:
+      - 'HomeWork3/**'
 
 jobs:
   build-and-test:
